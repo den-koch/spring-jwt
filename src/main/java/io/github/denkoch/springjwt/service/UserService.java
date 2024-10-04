@@ -8,9 +8,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -30,8 +32,14 @@ public class UserService {
         Authentication authentication =
                 authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()));
 
-        if (authentication.isAuthenticated())
-            return jwtProvider.createToken(user.getEmail());
+        if (authentication.isAuthenticated()) {
+
+            List<String> userRoles = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+
+            return jwtProvider.createToken(user.getEmail(), userRoles);
+        }
         return "Fail";
     }
 
